@@ -1,21 +1,29 @@
 import java.util.*; 
 import java.io.*;
 public class btdb{	
-//change 1: value record, instead of 256 yung bung record, gawin 2 bytes for the record information and 256 yung length of strings for value of input
-	public static final int order = 5;
-	public static final int length = (3 * order) - 1;
+//change 1: value record, instead of 256 yung bung record, gawin 2 bytes for the record information and 256 yung length of strings for value of input = 258 bytes
+//change 2: from m = 5, now m = 7
+	//File names
+	public static final String File_values = "Data.values.txt";
+	public static final String File_bt = "Data.bt.txt";
+	
+	public static final int m = 7;
+	public static final int length = (3 * m) - 1;
 	public static final String CMD_INSERT = "insert", CMD_UPDATE= "update", CMD_SELECT = "select",CMD_DELETE = "delete",CMD_EXIT = "exit";
 	
 	//Data.values RELATED VARIABLES
-	public static int value_recordCount;	
-	public static int value_recordBytes = 8; //bytes alloted for record count
-	public static int value_stringBytes = 258; //2 bytes length || 256 bytes string value
+	public static int value_recordCount = 0;	
+	public static final int value_recordBytes = 8; //bytes alloted for record count
+	public static final int value_stringBytes = 258; //2 bytes length || 256 bytes string value
 	
 	//Data.bt RELATED VARIABLES
-	public static int bt_recordCount;
-	String[] keys = new String[length]; //Keys
-	ArrayList<String[]> Records = new ArrayList<String[]>(); //Records of keys
-	ArrayList<String> Values = new ArrayList<String>(); //Records of Values
+	public static int bt_recordCount = 0;
+	public static int bt_rootLocation = 0;
+	public static final int bt_recordBytes = 16;
+	
+	public static int[] keyArray = new int[length]; //Keys
+	public static ArrayList<int[]> Records = new ArrayList<int[]>(); //Records of keys
+	public static ArrayList<String> Values = new ArrayList<String>(); //Records of Values
 		
 	public static void main(String[] args)throws IOException {
 		//error handling for if file exist
@@ -24,28 +32,46 @@ public class btdb{
 		System.out.println(args[0]);
 		System.out.println(args[1]);	
 		
-		value_recordCount = 0;
-		bt_recordCount = 0;	
+		//set all to -1
+		for(int i = 0; i < length; ++i){
+			keyArray[i] = -1;
+		}
 		
 		Scanner sc = new Scanner(System.in);
 		System.out.print(">");
 		while (sc.hasNext())
-		{						
-			String input = sc.nextLine();		
-			String[] dictionary = input.split(" ");			
-			switch(dictionary[0])
+		{		
+			String input = sc.nextLine();				
+			String[] dictionary = input.split(" ");	
+			String Command = dictionary[0];	
+			int keyInt = Integer.valueOf(dictionary[1]);	
+			String valueString = dictionary[2];
+			
+			switch(Command)
 			{
 				case CMD_INSERT:
-					insert(dictionary[1], dictionary[2]);
+					if(exist(keyInt)){
+						System.out.printf("< ERROR: %d already exists.\n", keyInt);
+						break;
+					}
+					insert(keyInt, valueString);
 					break;
 				case CMD_UPDATE:
-					update(dictionary[1], dictionary[2]);
+					if(!exist(keyInt)){
+						System.out.printf("< ERROR: %d does not exists.\n", keyInt);
+						break;
+					}
+					update(keyInt, valueString);
 					break;
 				case CMD_SELECT:
-					select(dictionary[1]);
+					if(!exist(keyInt)){
+						System.out.printf("< ERROR: %d does not exists.\n", keyInt);
+						break;
+					}
+					select(keyInt);
 					break;
 				case CMD_DELETE:;
-					delete(dictionary[1], dictionary[2]);
+					delete(keyInt, valueString);
 					break;
 				case CMD_EXIT:
 					break;
@@ -54,36 +80,75 @@ public class btdb{
 		}
 	}
 	
-	public static void insert(String key, String value)throws IOException{				
+	public static void insert(int key, String value)throws IOException{				
 		//check if key already exists (error if it does)
-		value_write(value);		
-		value_recordCount+=1;
+		//compare keys bigger/c
+		for(int i = 2; i < length; i = i+3){
+			int keyTemp = keyArray[i];
+			if(keyTemp == -1){ //if empty space
+				keyArray[i] = key; //key
+				keyArray[i+1] = value_recordCount;
+				Values.add(value);
+				break;
+			}
+			else{
+				if (keyTemp > key){
+					//recursive move? and insert?
+					break;
+				}
+			}
+		}
+		write(value);		
+		value_recordCount += 1;	
 		
-		System.out.printf("< %s inserted.", key);
+		System.out.printf("< %d inserted.\n", key);
 	}
 	
-	public static void update(String key, String value) {
+	public static void update(int key, String value) {
 		//check if key already exists (error if it does not)
-		System.out.printf("< %s updated.", key);
+		
+		System.out.printf("< %d updated.\n", key);
 	}
 	
-	public static void select(String key){
+	public static void select(int key){
 		//check if key already exists (error if it does not)
 		//using key, look for which record the value is in
-		System.out.printf("< %s => %s.", key, "");
+		System.out.printf("< %d => %s.\n", key, "");
 	}
 	
-	public static void delete(String key, String value) {
+	public static void delete(int key, String value) {
 	}
 	
-	public static void value_write(String value) throws IOException{
-		RandomAccessFile file = new RandomAccessFile("Data.values.txt", "rwd");		
-		file.writeLong(value_recordCount+1); //write/update num of records		
-	
-		file.seek(value_recordBytes + value_recordCount * value_stringBytes); //look which "record" to updated/add new line
-		file.writeShort(value.length()); 	//write length of value
-		file.write(value.getBytes("UTF8")); 	//write value after converting to bytes
-		file.close();
+	public static void write(String value) throws IOException{		
+		//Write in Data.bt
+		RandomAccessFile bt = new RandomAccessFile(File_bt, "rwd");
+		bt.writeLong(bt_recordCount+1); //write/update num of records		
+		bt.writeLong(bt_rootLocation); //ROOT		
+		bt.seek(bt_recordBytes + bt_recordCount * length); 		
+		for(int i = 0; i < length ; ++i){
+			bt.writeInt(keyArray[i]); 
+			System.out.printf("%d ", keyArray[i]);
+		}
+		System.out.println();
+		bt.close();
+		
+		//Write in Data.values
+		RandomAccessFile values = new RandomAccessFile(File_values, "rwd");		
+		values.writeLong(value_recordCount+1); //write/update num of records	
+		values.seek(value_recordBytes + value_recordCount * value_stringBytes); //look which "record" to updated/add new line
+		values.writeShort(value.length()); 	//write length of value
+		values.write(value.getBytes("UTF8")); 	//write value after converting to bytes
+		values.close();	
+	}	
+
+	public static boolean exist(int key){
+		for(int i = 2; i < length; i = i+3){
+			int keyTemp = keyArray[i];			
+			if(keyTemp == key){
+				return true;			
+			}
+		}
+		return false;
 	}
 }
 //check if values exist method
