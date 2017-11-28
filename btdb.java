@@ -7,7 +7,7 @@ public class btdb{
 	public static final String File_values = "Data.values.txt";
 	public static final String File_bt = "Data.bt.txt";
 	
-	public static final int m = 7;
+	public static final int m = 5;
 	public static final int length = (3 * m) - 1;
 	public static final String CMD_INSERT = "insert", CMD_UPDATE= "update", CMD_SELECT = "select",CMD_DELETE = "delete",CMD_EXIT = "exit";
 	
@@ -44,7 +44,7 @@ public class btdb{
 			String input = sc.nextLine();				
 			String[] dictionary = input.split(" ");	
 			String Command = dictionary[0];	
-			int keyInt = Integer.valueOf(dictionary[1]);	
+			int keyInt = Integer.valueOf(dictionary[1]);
 			String valueString = dictionary[2];
 			
 			switch(Command)
@@ -61,7 +61,7 @@ public class btdb{
 						System.out.printf("< ERROR: %d does not exists.\n", keyInt);
 						break;
 					}
-					update(keyInt, valueString);
+					update(keyInt, valueString);					
 					break;
 				case CMD_SELECT:
 					if(!exist(keyInt)){
@@ -81,27 +81,41 @@ public class btdb{
 	}
 	
 	public static void insert(int key, String value)throws IOException{				
-		//check if key already exists (error if it does)
-		//compare keys bigger/c
 		for(int i = 2; i < length; i = i+3){
 			int keyTemp = keyArray[i];
-			if(keyTemp == -1){ //if empty space
-				keyArray[i] = key; //key
-				keyArray[i+1] = value_recordCount;
-				Values.add(value);
+			if(keyTemp == -1){ 							//if empty space
+				keyArray[i] = key; 						//insert key
+				keyArray[i+1] = value_recordCount; 		//insert offset of value
 				break;
 			}
 			else{
 				if (keyTemp > key){
-					//recursive move? and insert?
-					break;
+					if (keyArray[length - 3] != -1){ 	
+						System.out.printf("< %s !!\n", "FULL");
+						
+					}
+					else{//SHIFTING VALUES						
+						for(int j =  length - 6; j >= i; j = j-3){
+							if (keyArray[j] != -1){							
+								keyArray[j+3] = keyArray[j];		//insert key
+								keyArray[j+3+1] = keyArray[j+1];	//insert offset of value												
+							}
+						}
+						keyArray[i] = key; 						//insert key
+						keyArray[i+1] = value_recordCount; 		//insert offset of value
+						break;
+					}					
 				}
 			}
 		}
-		write(value);		
-		value_recordCount += 1;	
-		
+		Values.add(value);  //add value to value array	
+		write(value);
+		value_recordCount += 1;			
 		System.out.printf("< %d inserted.\n", key);
+	}
+	
+	public static void split(){
+		
 	}
 	
 	public static void update(int key, String value) {
@@ -150,6 +164,8 @@ public class btdb{
 		}
 		return false;
 	}
+
+	
 }
 //check if values exist method
 //valuesrecords(string strFile) throws IOException {
