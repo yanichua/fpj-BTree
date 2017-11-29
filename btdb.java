@@ -21,7 +21,7 @@ public class btdb{
 	public static int bt_rootLocation = 0;
 	public static final int bt_recordBytes = 16;
 		
-	public int[] keyArray = new int[length]; //Keys
+	public static int[] keyArray; //Keys
 	public static ArrayList<int[]> Records = new ArrayList<int[]>(); //Records of keys
 	public static ArrayList<String> Values = new ArrayList<String>(); //Records of Values
 		
@@ -33,7 +33,8 @@ public class btdb{
 		File_values = args[1];		
 		
 		//Records[bt_recordCount] = create_array(); INSERT CREATE NEW RECORD HERE
-		
+		createNew();
+		keyArray= Records.get(0);
 		Scanner sc = new Scanner(System.in);
 		System.out.print(">");
 		while (sc.hasNext())
@@ -109,6 +110,12 @@ public class btdb{
 		write(value);
 		value_recordCount += 1;			
 		System.out.printf("< %d inserted.\n", key);
+	}
+	
+	public static void createNew() {
+		int[] newRecords = new int[length];
+		Arrays.fill(newRecords, new Integer(-1));
+		Records.add(newRecords);
 	}
 	
 	public static void split(){
