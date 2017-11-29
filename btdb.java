@@ -4,8 +4,8 @@ public class btdb{
 //change 1: value record, instead of 256 yung bung record, gawin 2 bytes for the record information and 256 yung length of strings for value of input = 258 bytes
 //change 2: from m = 5, now m = 7
 	//File names
-	public static final String File_values = "Data.values.txt";
-	public static final String File_bt = "Data.bt.txt";
+	public static String File_bt = "Data.bt";
+	public static String File_values = "Data.values";	
 	
 	public static final int m = 5;
 	public static final int length = (3 * m) - 1;
@@ -20,8 +20,8 @@ public class btdb{
 	public static int bt_recordCount = 0;
 	public static int bt_rootLocation = 0;
 	public static final int bt_recordBytes = 16;
-	
-	public static int[] keyArray = new int[length]; //Keys
+		
+	public int[] keyArray = new int[length]; //Keys
 	public static ArrayList<int[]> Records = new ArrayList<int[]>(); //Records of keys
 	public static ArrayList<String> Values = new ArrayList<String>(); //Records of Values
 		
@@ -29,13 +29,10 @@ public class btdb{
 		//error handling for if file exist
 
 		//====================================================
-		System.out.println(args[0]);
-		System.out.println(args[1]);	
+		File_bt = args[0];
+		File_values = args[1];		
 		
-		//set all to -1
-		for(int i = 0; i < length; ++i){
-			keyArray[i] = -1;
-		}
+		//Records[bt_recordCount] = create_array(); INSERT CREATE NEW RECORD HERE
 		
 		Scanner sc = new Scanner(System.in);
 		System.out.print(">");
@@ -79,7 +76,7 @@ public class btdb{
 			System.out.print(">");
 		}
 	}
-	
+		
 	public static void insert(int key, String value)throws IOException{				
 		for(int i = 2; i < length; i = i+3){
 			int keyTemp = keyArray[i];
