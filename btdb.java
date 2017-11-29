@@ -3,11 +3,12 @@ import java.io.*;
 public class btdb{	
 //change 1: value record, instead of 256 yung bung record, gawin 2 bytes for the record information and 256 yung length of strings for value of input = 258 bytes
 //change 2: from m = 5, now m = 7
+//java -Xmx32M btdb Data.bt Data.values
 	//File names
 	public static String File_bt = "Data.bt";
 	public static String File_values = "Data.values";	
 	
-	public static final int m = 5;
+	public static final int m = 7;
 	public static final int length = (3 * m) - 1;
 	public static final String CMD_INSERT = "insert", CMD_UPDATE= "update", CMD_SELECT = "select",CMD_DELETE = "delete",CMD_EXIT = "exit";
 	
@@ -32,19 +33,28 @@ public class btdb{
 		File_bt = args[0];
 		File_values = args[1];		
 		
-		//Records[bt_recordCount] = create_array(); INSERT CREATE NEW RECORD HERE
+		//Initialize
 		createNew();
 		keyArray= Records.get(0);
 		Scanner sc = new Scanner(System.in);
 		System.out.print(">");
 		while (sc.hasNext())
-		{		
+		{	
+			//Input
 			String input = sc.nextLine();				
 			String[] dictionary = input.split(" ");	
 			String Command = dictionary[0];	
 			int keyInt = Integer.valueOf(dictionary[1]);
-			String valueString = dictionary[2];
-			
+			String valueString = "";
+			for (int i = 2; i < dictionary.length;++i){
+				if(i == 2){
+					valueString = dictionary[i];
+				}
+				else{					
+					valueString = valueString + " " + dictionary[i];
+				}
+			}	
+			//Commands
 			switch(Command)
 			{
 				case CMD_INSERT:
@@ -79,6 +89,10 @@ public class btdb{
 	}
 		
 	public static void insert(int key, String value)throws IOException{				
+		if (keyArray[length - 3] != -1){ 	
+			System.out.printf("< %s !!\n", "FULL");
+			split(key);
+		}		
 		for(int i = 2; i < length; i = i+3){
 			int keyTemp = keyArray[i];
 			if(keyTemp == -1){ 							//if empty space
@@ -87,23 +101,17 @@ public class btdb{
 				break;
 			}
 			else{
-				if (keyTemp > key){
-					if (keyArray[length - 3] != -1){ 	
-						System.out.printf("< %s !!\n", "FULL");
-						
-					}
-					else{//SHIFTING VALUES						
-						for(int j =  length - 6; j >= i; j = j-3){
-							if (keyArray[j] != -1){							
-								keyArray[j+3] = keyArray[j];		//insert key
-								keyArray[j+3+1] = keyArray[j+1];	//insert offset of value												
-							}
+				if (keyTemp > key){						
+					for(int j =  length - 6; j >= i; j = j-3){
+						if (keyArray[j] != -1){							
+							keyArray[j+3] = keyArray[j];		//insert key
+							keyArray[j+3+1] = keyArray[j+1];	//insert offset of value												
 						}
-						keyArray[i] = key; 						//insert key
-						keyArray[i+1] = value_recordCount; 		//insert offset of value
-						break;
-					}					
-				}
+					}
+					keyArray[i] = key; 						//insert key
+					keyArray[i+1] = value_recordCount; 		//insert offset of value
+					break;
+				}					
 			}
 		}
 		Values.add(value);  //add value to value array	
