@@ -91,7 +91,7 @@ public class btdb{
 	public static void insert(int key, String value)throws IOException{				
 		if (keyArray[length - 3] != -1){ 	
 			System.out.printf("< %s !!\n", "FULL");
-			split(key);
+			//split(key);
 		}		
 		for(int i = 2; i < length; i = i+3){
 			int keyTemp = keyArray[i];
@@ -139,7 +139,14 @@ public class btdb{
 	public static void select(int key){
 		//check if key already exists (error if it does not)
 		//using key, look for which record the value is in
-		System.out.printf("< %d => %s.\n", key, "");
+		for(int i=2; i< length; i+=3) {
+			int temp = keyArray[i];
+			if(temp == key) {
+				System.out.println(Values.get(keyArray[i+1])); 
+				return;
+			}
+		}
+		System.out.println("ERROR: "+ key + " does not exist.");
 	}
 	
 	public static void delete(int key, String value) {
