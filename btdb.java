@@ -8,7 +8,7 @@ public class btdb{
 	public static String File_bt = "Data.bt";
 	public static String File_values = "Data.values";	
 	//Final Variables
-	public static final int m = 5;
+	public static final int m = 7;
 	public static final int length = (3 * m) - 1;
 	public static final String CMD_INSERT = "insert", CMD_UPDATE= "update", CMD_SELECT = "select",CMD_DELETE = "delete",CMD_EXIT = "exit";
 	//Data.values RELATED VARIABLES
