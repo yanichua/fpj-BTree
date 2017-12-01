@@ -28,6 +28,7 @@ public class btdb{
 	
 	public static int root;
 	
+	//generalized input object
 	static class Input{
 		String command;
 		String value="";
@@ -44,6 +45,7 @@ public class btdb{
 			}
 		}
 	}
+	
 	public static void main(String[] args)throws IOException {
 		//error handling for if file exist
 		//====================================================
@@ -66,11 +68,11 @@ public class btdb{
 			switch(read.command)
 			{
 				case CMD_INSERT:
-					if(exist(read.key)){
+					/**if(exist(read.key)){
 						System.out.printf("< ERROR: %d already exists.\n", read.key);
 						break;
-					}
-					insert(read);
+					}**/
+					insert2(read);
 					break;
 				case CMD_UPDATE:
 					if(!exist(read.key)){
@@ -106,12 +108,38 @@ public class btdb{
 		Records.add(newRecords);
 	}
 	
-	public static void searchNode(Input read, int focus, int index) {
+	public static int searchNode (Input read, int focus, int index) throws IOException {
 		//focus starts with root
-		//if(not full, insert)
-		//if(full, focus++)
-			//(if focus++ > number of nodes, createnew)
-			//(else move to next node)
+		keyArray = Records.get(focus);
+		// if vacant
+		if(index==-1) return focus;
+		if(keyArray[index]==read.key) return focus;
+		else {
+			if(index==length-3) {
+				if(focus+1==Records.size()) return focus;
+				else return searchNode(read, focus++, 2);
+			}
+			if(read.key>keyArray[index]) {
+				index+=3;
+				return searchNode(read, focus, index);
+			}
+			else {
+				int firstID = keyArray[index-1];
+				if(firstID==-1) return focus;
+				else {
+					for(int i=0; i<Records.size(); i++) {
+						if(Records.get(i)[2]==firstID) return searchNode(read, i, 2);
+					}
+					return focus;
+				}
+			}
+		}
+	}
+	public static void insert2(Input read) throws IOException{
+		int f = searchNode(read, root,2);
+		keyArray = Records.get(searchNode(read, root, 2));
+		System.out.println(f);
+		insert(read);
 	}
 		
 	public static void insert(Input read)throws IOException{				
@@ -194,7 +222,7 @@ public class btdb{
 		values.writeShort(value.length()); 	//write length of value
 		values.write(value.getBytes("UTF8")); 	//write value after converting to bytes
 		values.close();	
-	}	
+	}	 
 
 	public static boolean exist(int key){
 		for(int i = 2; i < length; i = i+3){
