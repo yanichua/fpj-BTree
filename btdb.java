@@ -26,7 +26,6 @@ public class btdb{
 	public static ArrayList<int[]> Records = new ArrayList<int[]>(); //Records of keys
 	public static ArrayList<String> Values = new ArrayList<String>(); //Records of Values
 	
-	public static int root;
 	
 	//generalized input object
 	static class Input{
@@ -54,7 +53,7 @@ public class btdb{
 		
 		//Initialize
 		createNew();
-		root=0;
+		bt_rootLocation=0;
 		keyArray= Records.get(0);
 		Scanner sc = new Scanner(System.in);
 		System.out.print(">");
@@ -86,7 +85,7 @@ public class btdb{
 						System.out.printf("< ERROR: %d does not exists.\n", read.key);
 						break;
 					}
-					select(read.key);
+					select(read);
 					break;
 				case CMD_DELETE:;
 					delete(read.key, read.value);
@@ -136,9 +135,8 @@ public class btdb{
 		}
 	}
 	public static void insert2(Input read) throws IOException{
-		int f = searchNode(read, root,2);
-		keyArray = Records.get(searchNode(read, root, 2));
-		System.out.println(f);
+		int f = searchNode(read, bt_rootLocation,2);
+		keyArray = Records.get(searchNode(read, bt_rootLocation, 2));
 		insert(read);
 	}
 		
@@ -186,17 +184,18 @@ public class btdb{
 		System.out.printf("< %d updated.\n", key);
 	}
 	
-	public static void select(int key){
+	public static void select(Input read) throws IOException{
 		//check if key already exists (error if it does not)
 		//using key, look for which record the value is in
+		keyArray = Records.get(searchNode(read, bt_rootLocation, 2));
 		for(int i=2; i< length; i+=3) {
 			int temp = keyArray[i];
-			if(temp == key) {
+			if(temp == read.key) {
 				System.out.println(Values.get(keyArray[i+1])); 
 				return;
 			}
 		}
-		System.out.println("ERROR: "+ key + " does not exist.");
+		System.out.println("ERROR: "+ read.key + " does not exist.");
 	}
 	
 	public static void delete(int key, String value) {
