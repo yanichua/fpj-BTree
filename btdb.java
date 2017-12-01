@@ -8,7 +8,7 @@ public class btdb{
 	public static String File_bt = "Data.bt";
 	public static String File_values = "Data.values";	
 	//Final Variables
-	public static final int m = 7;
+	public static final int m = 5;
 	public static final int length = (3 * m) - 1;
 	public static final String CMD_INSERT = "insert", CMD_UPDATE= "update", CMD_SELECT = "select",CMD_DELETE = "delete",CMD_EXIT = "exit";
 	//Data.values RELATED VARIABLES
@@ -48,16 +48,16 @@ public class btdb{
 		//Initialize
 		File_bt = args[0];
 		File_values = args[1];	
-		createNew();
-		keyArray= Records.get(bt_rootLocation);
+		createNew();		
 		Scanner sc = new Scanner(System.in);
 		System.out.print(">");
 		
 		while (sc.hasNext())
-		{	
+		{				
 			//Input
 			Input read = new Input(sc.nextLine());
-			//selects correct array to execute command
+			//selects correct array to execute command, always starts at root	
+			keyArray= Records.get(bt_rootLocation);
 			searchNode(read, bt_rootLocation, 2); 
 				
 			//Commands
@@ -118,13 +118,14 @@ public class btdb{
 		//focus starts with root
 		keyArray = Records.get(focus);
 		// if vacant
-		if(index==-1) return; //means empty,
-		if(keyArray[index]==read.key) return; //for select/Update/Already exist, array selected for 
-		else {
+		if(index==-1) return; //means key node is empty,
+		if(keyArray[index]==read.key) return; //for select/Update/Already exist
+		else { //if not empty and not equal to any
 			if(index==length-3) { //if full, split
-				
-				if(focus+1==Records.size()) return;
-				else searchNode(read, focus++, 2);
+				//if recordcount = 0, add 2 new records. Else, only 
+				//if(focus+1==Records.size()) return;
+				//else searchNode(read, focus++, 2);
+				return; //at this point, you should be at the most bottom child/node
 			}
 			if(read.key>keyArray[index]){
 				index+=3;
@@ -151,11 +152,54 @@ public class btdb{
 		return false;
 	}
 	
-	public static void insert(int key, String value)throws IOException{				
-		if (keyArray[length - 3] != -1){ 	
-			System.out.printf("< %s !!\n", "FULL");
+	public static void insert(int key, String value)throws IOException{	
+		if (keyArray[length - 3] != -1){ //check if full
+			int promote = 0;
+			promote = findPromote(key);			
+			System.out.println(promote);
+			//retain current array until mid, set to -1 after mid > create new array for other half of current array
+			//set current array as first child, give parent			
+			createNew();
+			keyArray = Records.get(bt_recordCount);
+			for(int i = 2; i < length; i = i+3){
+				
+			}
+		}
+		else{ //if not full
+			insert_execute(key, value);
+		}
+		Values.add(value);  //add value to value array	
+		write(value);
+		value_recordCount += 1;			
+		System.out.printf("< %d inserted.\n", key);
+	}
+	public static int findPromote(int key){
+		//if index is equal to mid of m, that is to be promoted
+		int index = 0;		
+		for(int i = 2; i < length; i = i+3){
+			int keyTemp = keyArray[i];	
+			if (key < keyTemp){	
+				if (index == m/2){
+					promote = key;
+					break;
+				}
+				index++;
+			}
+			if (index == m/2){
+				promote = keyArray[i];
+				break;
+			}
+			index++;
+		}
+	}
+	
+	public static void insert_execute(int key, String value)throws IOException{	
+		//if (keyArray[length - 3] != -1){ //check if full
+		//	System.out.printf("< %s !!\n", "FULL");
+			
 			//split(key);
-		}		
+		//}
+		
 		for(int i = 2; i < length; i = i+3){
 			int keyTemp = keyArray[i];
 			if(keyTemp == -1){ 							//if empty space
@@ -164,7 +208,7 @@ public class btdb{
 				break;
 			}
 			else{
-				if (keyTemp > key){						
+				if (key < keyTemp){						
 					for(int j =  length - 6; j >= i; j = j-3){
 						if (keyArray[j] != -1){							
 							keyArray[j+3] = keyArray[j];		//insert key
@@ -176,17 +220,9 @@ public class btdb{
 					break;
 				}					
 			}
-		}
-		Values.add(value);  //add value to value array	
-		write(value);
-		value_recordCount += 1;			
-		System.out.printf("< %d inserted.\n", key);
+		}		
 	}
-		
-	public static void split(){
-		
-	}
-	
+			
 	public static void update(int key, String value) {
 		//check if key already exists (error if it does not)
 		
@@ -194,9 +230,7 @@ public class btdb{
 	}
 	
 	public static void select(Input read) throws IOException{
-		//check if key already exists (error if it does not)
 		//using key, look for which record the value is in
-		//keyArray = Records.get(searchNode(read, bt_rootLocation, 2));
 		for(int i=2; i< length; i+=3) {
 			int temp = keyArray[i];
 			if(temp == read.key) {
@@ -225,7 +259,8 @@ public class btdb{
 		
 		//Write in Data.values
 		RandomAccessFile values = new RandomAccessFile(File_values, "rwd");		
-		values.writeLong(value_recordCount+1); //write/update num of records	
+		values.writeLong(value_recordCount+1); //write/update num of records
+		//loop to update all records
 		values.seek(value_recordBytes + value_recordCount * value_stringBytes); //look which "record" to updated/add new line
 		values.writeShort(value.length()); 	//write length of value
 		values.write(value.getBytes("UTF8")); 	//write value after converting to bytes
