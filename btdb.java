@@ -8,7 +8,7 @@ public class btdb{
 	public static String File_bt = "Data.bt";
 	public static String File_values = "Data.values";	
 	//Final Variables
-	public static final int m = 7;
+	public static final int m = 5;
 	public static final int length = (3 * m) - 1;
 	public static final String CMD_INSERT = "insert", CMD_UPDATE= "update", CMD_SELECT = "select",CMD_DELETE = "delete",CMD_EXIT = "exit";
 	//Data.values RELATED VARIABLES
@@ -16,6 +16,7 @@ public class btdb{
 	public static final int value_recordBytes = 8; //bytes alloted for record count
 	public static final int value_stringBytes = 258; //2 bytes length || 256 bytes string value
 	//Data.bt RELATED VARIABLES
+	public static int currentroot = 0;
 	public static int bt_recordCount = 0;
 	public static int bt_rootLocation = 0;
 	public static final int bt_recordBytes = 16;
@@ -48,7 +49,8 @@ public class btdb{
 		//Initialize
 		File_bt = args[0];
 		File_values = args[1];	
-		createNew();		
+		createNew();	
+		keyArray= Records.get(bt_rootLocation);		
 		Scanner sc = new Scanner(System.in);
 		System.out.print(">");
 		
@@ -57,9 +59,8 @@ public class btdb{
 			//Input
 			Input read = new Input(sc.nextLine());
 			//selects correct array to execute command, always starts at root	
-			keyArray= Records.get(bt_rootLocation);
 			searchNode(read, bt_rootLocation, 2); 
-				
+			System.out.println("current root = " + currentroot);
 			//Commands
 			switch(read.command)
 			{	
@@ -96,8 +97,10 @@ public class btdb{
 					break;
 				default:
 					System.out.println("ERROR: invalid command");
-					break;
-			}			
+					break;				
+			}	
+			System.out.println("update currentroot = " + currentroot);
+			Records.set(currentroot, keyArray);	
 			System.out.print(">");
 		}
 	}
@@ -116,17 +119,29 @@ public class btdb{
 		Index is index of array in bt ~ keys, IDs, etc */
 		
 		//focus starts with root
+		currentroot = focus;		
 		keyArray = Records.get(focus);
+		//if(index==length-3) { //if full, split
+			if(keyArray[length-3] != -1){
+			int promote = findPromote(read.key);		
+			System.out.println("promote = " + promote);
+			split(promote);			
+			searchNode(read, bt_rootLocation, 2);
+			}
+		//}
+			
 		// if vacant
-		if(index==-1) return; //means key node is empty,
+		if(keyArray[index] == -1) return;//if(index == -1) return; //means key node is empty,
 		if(keyArray[index]==read.key) return; //for select/Update/Already exist
 		else { //if not empty and not equal to any
-			if(index==length-3) { //if full, split
-				//if recordcount = 0, add 2 new records. Else, only 
-				//if(focus+1==Records.size()) return;
-				//else searchNode(read, focus++, 2);
-				return; //at this point, you should be at the most bottom child/node
-			}
+			//if(index==length-3) { //if full, split
+			//	if(keyArray[index] != -1){
+			//	int promote = findPromote(read.key);		
+			//	System.out.println(promote);
+			//	split(promote);			
+			//	searchNode(read, bt_rootLocation, 2);
+			//	}
+			//}
 			if(read.key>keyArray[index]){
 				index+=3;
 				searchNode(read, focus, index);
@@ -151,28 +166,53 @@ public class btdb{
 		}
 		return false;
 	}
-	
-	public static void insert(int key, String value)throws IOException{	
-		if (keyArray[length - 3] != -1){ //check if full
-			int promote = 0;
-			promote = findPromote(key);			
-			System.out.println(promote);
-			//retain current array until mid, set to -1 after mid > create new array for other half of current array
-			//set current array as first child, give parent			
-			createNew();
-			keyArray = Records.get(bt_recordCount);
-			for(int i = 2; i < length; i = i+3){
-				
+
+	public static void split(int promote){			
+		//Split 2 children
+		int[] temp = keyArray; //current focus array		
+		int index = 2;
+		
+		//create new child
+		createNew();
+		keyArray = Records.get(bt_recordCount-1);	//newly creaate	
+		for(int i = 2; i < length; i = i+3){ //loop in temp	
+			if (temp[i] == promote){
+				temp[i] = -1;
+				temp[i+1] = -1;
+				index+=3;
 			}
-		}
-		else{ //if not full
-			insert_execute(key, value);
-		}
-		Values.add(value);  //add value to value array	
-		write(value);
-		value_recordCount += 1;			
-		System.out.printf("< %d inserted.\n", key);
+			else if(temp[i] > promote){
+				keyArray[index] = temp[i];
+				keyArray[index+1] = temp[i+1];
+				temp[i] = -1;
+				temp[i+1] = -1;
+				index+=3;
+			}
+		}	
+		int tempfocus = bt_recordCount-1; //focus of new child		
+		System.out.println("currentroot = " + tempfocus);
+		System.out.println("tempfocus = " + tempfocus);
+		//if no parent, create new root
+		if(temp[0] == -1 && keyArray[0] == -1){			
+			createNew(); //create parent/root
+			bt_rootLocation = bt_recordCount-1;
+			System.out.println("root location = " + bt_rootLocation);
+			
+			temp[0] = bt_rootLocation;
+			keyArray[0] = bt_rootLocation;
+			Records.set(currentroot, temp);			
+			Records.set(tempfocus, keyArray);
+			
+			keyArray = Records.get(bt_rootLocation);
+			keyArray[1] = currentroot;
+			keyArray[1+3] = tempfocus;	
+		}	
+		//update new child in record
+		//Records.set(currentroot, temp);
+		//Records.set(tempfocus, keyArray);
+				
 	}
+	
 	public static int findPromote(int key){
 		//if index is equal to mid of m, that is to be promoted
 		int index = 0;		
@@ -180,26 +220,19 @@ public class btdb{
 			int keyTemp = keyArray[i];	
 			if (key < keyTemp){	
 				if (index == m/2){
-					promote = key;
-					break;
+					return key;
 				}
 				index++;
 			}
 			if (index == m/2){
-				promote = keyArray[i];
-				break;
+				return keyArray[i];				
 			}
 			index++;
 		}
+		return -1;
 	}
 	
-	public static void insert_execute(int key, String value)throws IOException{	
-		//if (keyArray[length - 3] != -1){ //check if full
-		//	System.out.printf("< %s !!\n", "FULL");
-			
-			//split(key);
-		//}
-		
+	public static void insert(int key, String value)throws IOException{	
 		for(int i = 2; i < length; i = i+3){
 			int keyTemp = keyArray[i];
 			if(keyTemp == -1){ 							//if empty space
@@ -220,7 +253,11 @@ public class btdb{
 					break;
 				}					
 			}
-		}		
+		}
+		Values.add(value);  //add value to value array	
+		write(value);
+		value_recordCount += 1;			
+		System.out.printf("< %d inserted.\n", key);		
 	}
 			
 	public static void update(int key, String value) {
@@ -250,9 +287,17 @@ public class btdb{
 		bt.writeLong(bt_recordCount+1); //write/update num of records		
 		bt.writeLong(bt_rootLocation); //ROOT		
 		bt.seek(bt_recordBytes + bt_recordCount * length); 		
+		
+		
 		for(int i = 0; i < length ; ++i){
-			bt.writeInt(keyArray[i]); 
-			System.out.printf("%d ", keyArray[i]);
+			bt.writeInt(keyArray[i]); 			
+		}
+			
+		for(int[] recordnum : Records){
+			for(int x : recordnum){
+				System.out.printf("%d ", x);
+			}
+			System.out.println();
 		}
 		System.out.println();
 		bt.close();
