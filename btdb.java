@@ -135,7 +135,6 @@ public class btdb{
 		}
 	}
 	public static void insert2(Input read) throws IOException{
-		int f = searchNode(read, bt_rootLocation,2);
 		keyArray = Records.get(searchNode(read, bt_rootLocation, 2));
 		insert(read);
 	}
