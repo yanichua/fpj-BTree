@@ -7,21 +7,19 @@ public class btdb{
 	//File names
 	public static String File_bt = "Data.bt";
 	public static String File_values = "Data.values";	
-	
+	//Final Variables
 	public static final int m = 7;
 	public static final int length = (3 * m) - 1;
 	public static final String CMD_INSERT = "insert", CMD_UPDATE= "update", CMD_SELECT = "select",CMD_DELETE = "delete",CMD_EXIT = "exit";
-	
 	//Data.values RELATED VARIABLES
 	public static int value_recordCount = 0;	
 	public static final int value_recordBytes = 8; //bytes alloted for record count
 	public static final int value_stringBytes = 258; //2 bytes length || 256 bytes string value
-	
 	//Data.bt RELATED VARIABLES
 	public static int bt_recordCount = 0;
 	public static int bt_rootLocation = 0;
 	public static final int bt_recordBytes = 16;
-		
+	//Internal Memory	
 	public static int[] keyArray; //Keys
 	public static ArrayList<int[]> Records = new ArrayList<int[]>(); //Records of keys
 	public static ArrayList<String> Values = new ArrayList<String>(); //Records of Values
@@ -46,14 +44,12 @@ public class btdb{
 	
 	public static void main(String[] args)throws IOException {
 		//error handling for if file exist
-		//====================================================
-		File_bt = args[0];
-		File_values = args[1];		
-		
+		//====================================================		
 		//Initialize
+		File_bt = args[0];
+		File_values = args[1];	
 		createNew();
-		bt_rootLocation=0;
-		keyArray= Records.get(0);
+		keyArray= Records.get(bt_rootLocation);
 		Scanner sc = new Scanner(System.in);
 		System.out.print(">");
 		
@@ -61,16 +57,18 @@ public class btdb{
 		{	
 			//Input
 			Input read = new Input(sc.nextLine());
-
+			//selects correct array to execute command
+			searchNode(read, bt_rootLocation, 2); 
+				
 			//Commands
 			switch(read.command)
-			{
-				searchNode(read,btRootLocation,2); //selects correct array to execute command
+			{	
 				case CMD_INSERT:
 					if(exist(read.key)){
 						System.out.printf("< ERROR: %d already exists.\n", read.key);
 						break;
 					}
+					insert(read.key, read.value);
 					break;
 				case CMD_UPDATE:
 					if(!exist(read.key)){
@@ -86,7 +84,11 @@ public class btdb{
 					}
 					select(read);
 					break;
-				case CMD_DELETE:;
+				case CMD_DELETE:
+					if(!exist(read.key)){
+						System.out.printf("< ERROR: %d does not exists.\n", read.key);
+						break;
+					}
 					delete(read.key, read.value);
 					break;
 				case CMD_EXIT:
@@ -107,10 +109,11 @@ public class btdb{
 		bt_recordCount +=1;
 	}
 	
-	public static void searchNode (Input read, int focus, int index) throws IOException {
-		//Focus is the record num of bt
-		//read is inputs
-		//index is index of array in bt ~ keys, IDs, etc
+	public static void searchNode(Input read, int focus, int index) throws IOException {
+		/* By the end of this method, correct array/record for execution of command is selected
+		Focus - the record num of bt
+		Read - inputs
+		Index is index of array in bt ~ keys, IDs, etc */
 		
 		//focus starts with root
 		keyArray = Records.get(focus);
@@ -148,7 +151,7 @@ public class btdb{
 		return false;
 	}
 	
-	public static void insert(Input read)throws IOException{				
+	public static void insert(int key, String value)throws IOException{				
 		if (keyArray[length - 3] != -1){ 	
 			System.out.printf("< %s !!\n", "FULL");
 			//split(key);
@@ -156,28 +159,28 @@ public class btdb{
 		for(int i = 2; i < length; i = i+3){
 			int keyTemp = keyArray[i];
 			if(keyTemp == -1){ 							//if empty space
-				keyArray[i] = read.key; 						//insert key
+				keyArray[i] = key; 						//insert key
 				keyArray[i+1] = value_recordCount; 		//insert offset of value
 				break;
 			}
 			else{
-				if (keyTemp > read.key){						
+				if (keyTemp > key){						
 					for(int j =  length - 6; j >= i; j = j-3){
 						if (keyArray[j] != -1){							
 							keyArray[j+3] = keyArray[j];		//insert key
 							keyArray[j+3+1] = keyArray[j+1];	//insert offset of value												
 						}
 					}
-					keyArray[i] = read.key; 						//insert key
+					keyArray[i] = key; 						//insert key
 					keyArray[i+1] = value_recordCount; 		//insert offset of value
 					break;
 				}					
 			}
 		}
-		Values.add(read.value);  //add value to value array	
-		write(read.value);
+		Values.add(value);  //add value to value array	
+		write(value);
 		value_recordCount += 1;			
-		System.out.printf("< %d inserted.\n", read.key);
+		System.out.printf("< %d inserted.\n", key);
 	}
 		
 	public static void split(){
@@ -193,7 +196,7 @@ public class btdb{
 	public static void select(Input read) throws IOException{
 		//check if key already exists (error if it does not)
 		//using key, look for which record the value is in
-		keyArray = Records.get(searchNode(read, bt_rootLocation, 2));
+		//keyArray = Records.get(searchNode(read, bt_rootLocation, 2));
 		for(int i=2; i< length; i+=3) {
 			int temp = keyArray[i];
 			if(temp == read.key) {
