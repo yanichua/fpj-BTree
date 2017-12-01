@@ -25,8 +25,7 @@ public class btdb{
 	public static int[] keyArray; //Keys
 	public static ArrayList<int[]> Records = new ArrayList<int[]>(); //Records of keys
 	public static ArrayList<String> Values = new ArrayList<String>(); //Records of Values
-	
-	
+		
 	//generalized input object
 	static class Input{
 		String command;
@@ -66,12 +65,12 @@ public class btdb{
 			//Commands
 			switch(read.command)
 			{
+				searchNode(read,btRootLocation,2); //selects correct array to execute command
 				case CMD_INSERT:
-					/**if(exist(read.key)){
+					if(exist(read.key)){
 						System.out.printf("< ERROR: %d already exists.\n", read.key);
 						break;
-					}**/
-					insert2(read);
+					}
 					break;
 				case CMD_UPDATE:
 					if(!exist(read.key)){
@@ -105,40 +104,50 @@ public class btdb{
 		int[] newRecords = new int[length];
 		Arrays.fill(newRecords, new Integer(-1));
 		Records.add(newRecords);
+		bt_recordCount +=1;
 	}
 	
-	public static int searchNode (Input read, int focus, int index) throws IOException {
+	public static void searchNode (Input read, int focus, int index) throws IOException {
+		//Focus is the record num of bt
+		//read is inputs
+		//index is index of array in bt ~ keys, IDs, etc
+		
 		//focus starts with root
 		keyArray = Records.get(focus);
 		// if vacant
-		if(index==-1) return focus;
-		if(keyArray[index]==read.key) return focus;
+		if(index==-1) return; //means empty,
+		if(keyArray[index]==read.key) return; //for select/Update/Already exist, array selected for 
 		else {
-			if(index==length-3) {
-				if(focus+1==Records.size()) return focus;
-				else return searchNode(read, focus++, 2);
+			if(index==length-3) { //if full, split
+				
+				if(focus+1==Records.size()) return;
+				else searchNode(read, focus++, 2);
 			}
-			if(read.key>keyArray[index]) {
+			if(read.key>keyArray[index]){
 				index+=3;
-				return searchNode(read, focus, index);
+				searchNode(read, focus, index);
 			}
-			else {
+			else{
 				int firstID = keyArray[index-1];
-				if(firstID==-1) return focus;
-				else {
-					for(int i=0; i<Records.size(); i++) {
-						if(Records.get(i)[2]==firstID) return searchNode(read, i, 2);
-					}
-					return focus;
+				if(firstID==-1) return; //if has no child
+				else{ //going into the child = firstID		
+					focus = firstID;
+					searchNode(read, focus, 2);
 				}
 			}
 		}
 	}
-	public static void insert2(Input read) throws IOException{
-		keyArray = Records.get(searchNode(read, bt_rootLocation, 2));
-		insert(read);
+
+	public static boolean exist(int key){
+		for(int i = 2; i < length; i = i+3){
+			int keyTemp = keyArray[i];			
+			if(keyTemp == key){
+				return true;			
+			}
+		}
+		return false;
 	}
-		
+	
 	public static void insert(Input read)throws IOException{				
 		if (keyArray[length - 3] != -1){ 	
 			System.out.printf("< %s !!\n", "FULL");
@@ -170,9 +179,7 @@ public class btdb{
 		value_recordCount += 1;			
 		System.out.printf("< %d inserted.\n", read.key);
 	}
-	
-	
-	
+		
 	public static void split(){
 		
 	}
@@ -221,17 +228,6 @@ public class btdb{
 		values.write(value.getBytes("UTF8")); 	//write value after converting to bytes
 		values.close();	
 	}	 
-
-	public static boolean exist(int key){
-		for(int i = 2; i < length; i = i+3){
-			int keyTemp = keyArray[i];			
-			if(keyTemp == key){
-				return true;			
-			}
-		}
-		return false;
-	}
-
 	
 }
 //check if values exist method
