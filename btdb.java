@@ -123,13 +123,14 @@ public class btdb{
 		keyArray = Records.get(focus);
 		//if(index==length-3) { //if full, split
 			if(keyArray[length-3] != -1){
-			int promote = findPromote(read.key);		
-			System.out.println("promote = " + promote);
-			split(promote);			
-			searchNode(read, bt_rootLocation, 2);
+				int promote = findPromote(read.key);		
+				System.out.println("promote = " + promote);
+				split(read.key, promote);			
+				//latest array is the root
+				
+				searchNode(read, bt_rootLocation, 2);
 			}
-		//}
-			
+		//}			
 		// if vacant
 		if(keyArray[index] == -1) return;//if(index == -1) return; //means key node is empty,
 		if(keyArray[index]==read.key) return; //for select/Update/Already exist
@@ -142,12 +143,19 @@ public class btdb{
 			//	searchNode(read, bt_rootLocation, 2);
 			//	}
 			//}
-			if(read.key>keyArray[index]){
+			int firstID = -1;
+			if(read.key > keyArray[index]){
+				firstID = keyArray[index+2];				
+				if(firstID==-1) return; //if has no child
+				else{ //going into the child = firstID		
+					focus = firstID;
+					searchNode(read, focus, 2);
+				}
 				index+=3;
 				searchNode(read, focus, index);
 			}
 			else{
-				int firstID = keyArray[index-1];
+				firstID = keyArray[index-1];
 				if(firstID==-1) return; //if has no child
 				else{ //going into the child = firstID		
 					focus = firstID;
@@ -167,19 +175,20 @@ public class btdb{
 		return false;
 	}
 
-	public static void split(int promote){			
+	public static void split(int key, int promote){			
 		//Split 2 children
 		int[] temp = keyArray; //current focus array		
 		int index = 2;
-		
+		int promote_value = 0;
 		//create new child
 		createNew();
 		keyArray = Records.get(bt_recordCount-1);	//newly creaate	
 		for(int i = 2; i < length; i = i+3){ //loop in temp	
 			if (temp[i] == promote){
+				promote_value = temp[i+1];
 				temp[i] = -1;
 				temp[i+1] = -1;
-				index+=3;
+				//index+=3;
 			}
 			else if(temp[i] > promote){
 				keyArray[index] = temp[i];
@@ -205,8 +214,16 @@ public class btdb{
 			
 			keyArray = Records.get(bt_rootLocation);
 			keyArray[1] = currentroot;
-			keyArray[1+3] = tempfocus;	
-		}	
+			keyArray[1+3] = tempfocus;				
+		}
+	
+		//add promoted nodes if not same as key
+		if(key != promote){
+			//insert to root node
+			promote_to_root(promote, promote_value);
+		}
+				
+				
 		//update new child in record
 		//Records.set(currentroot, temp);
 		//Records.set(tempfocus, keyArray);
@@ -230,6 +247,30 @@ public class btdb{
 			index++;
 		}
 		return -1;
+	}
+	
+	public static void promote_to_root(int key, int offset_value){
+		for(int i = 2; i < length; i = i+3){
+			int keyTemp = keyArray[i];
+			if(keyTemp == -1){ 							//if empty space
+				keyArray[i] = key; 						//insert key
+				keyArray[i+1] = offset_value; 		//insert offset of value
+				break;
+			}
+			else{
+				if (key < keyTemp){						
+					for(int j =  length - 6; j >= i; j = j-3){
+						if (keyArray[j] != -1){							
+							keyArray[j+3] = keyArray[j];		//insert key
+							keyArray[j+3+1] = keyArray[j+1];	//insert offset of value												
+						}
+					}
+					keyArray[i] = key; 						//insert key
+					keyArray[i+1] = offset_value; 		//insert offset of value
+					break;
+				}					
+			}
+		}
 	}
 	
 	public static void insert(int key, String value)throws IOException{	
@@ -257,7 +298,7 @@ public class btdb{
 		Values.add(value);  //add value to value array	
 		write(value);
 		value_recordCount += 1;			
-		System.out.printf("< %d inserted.\n", key);		
+		System.out.printf("< %d inserted.\n", key);				
 	}
 			
 	public static void update(int key, String value) {
