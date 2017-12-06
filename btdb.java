@@ -25,7 +25,7 @@ public class btdb{
 	public static int[] keyArray; //Keys
 	public static ArrayList<int[]> Records = new ArrayList<int[]>(); //Records of keys
 	public static ArrayList<String> Values = new ArrayList<String>(); //Records of Values
-		
+	public static int splitnum = 0;
 	//generalized input object
 	static class Input{
 		String command;
@@ -121,41 +121,105 @@ public class btdb{
 		//focus starts with root
 		Newfocus = -1;
 		currentFocus = focus;	
-		System.out.println("focus " + currentFocus);			
-		keyArray = Records.get(focus);
-		//if(index==length-3) { //if full, split
-			if(keyArray[length-3] != -1){
-				System.out.println("SPLIT! " + currentFocus);	
-				int promote = findPromote(read.key);		
-				split(read.key, promote);			
-				//latest array is the root
-				if (read.key == promote){
-					keyArray = Records.get(bt_rootLocation);
-					currentFocus = bt_rootLocation;
-					return;
-				}				
-				else{
-					searchNode(read, bt_rootLocation, 2);
-				}
-			}
-		//}			
-		// if vacant
-		
+		System.out.println("focus " + currentFocus);		
+		System.out.println("index " + index);			
+		keyArray = Records.get(focus);	
 		if(keyArray[index] == -1) return;//if(index == -1) return; //means key node is empty,
 		if(keyArray[index]==read.key) return; //for select/Update/Already exist
-		else { //if not empty and not equal to any
+		else { //if not empty and not equal to any	
+			//IF FULL > FIRST SPLIT			
+			if(keyArray[length-3] != -1){ //current array is full
+				if (currentFocus == bt_rootLocation){ //if parent node, if with child, insert to child first. if last child offset is -1 then split
+					////////////////
+					System.out.println("ROOT Full - " + currentFocus);	
+					if (keyArray[length-1] != -1){
+						int firstID = -1;
+						if(read.key > keyArray[index]){
+							firstID = keyArray[index+2];				
+							if(firstID==-1) return; //if has no child
+							else{ //going into the child = firstID	
+								if(index == length - 3){
+									focus = firstID;
+									searchNode(read, focus, 2);
+								}
+								else{
+									if (keyArray[index+3]== -1 || read.key < keyArray[index+3]){
+										focus = firstID;
+										searchNode(read, focus, 2);
+									}
+									else{	
+										index+=3;
+										searchNode(read, focus, index);
+									}
+								}
+							}
+						}
+						else{
+							firstID = keyArray[index-1];
+							if(firstID==-1) return; //if has no child
+							else{ //going into the child = firstID		
+								focus = firstID;
+								searchNode(read, focus, 2);
+							}
+						}
+					}
+					else
+					{
+						System.out.println("SPLIT ROOT! " + currentFocus);	
+						int promote = findPromote(read.key, keyArray);		
+						split(read.key, promote);			
+						//latest array is the root
+						if (read.key == promote){			
+							System.out.println("Insert promote! " + currentFocus);	
+							keyArray = Records.get(bt_rootLocation);
+							currentFocus = bt_rootLocation;
+							return;
+						}				
+						else{
+							searchNode(read, bt_rootLocation, 2);
+						}
+					}
+					
+					////////////////////////////
+				}
+				else{
+				//if (splitnum == 0 && currentFocus == bt_rootLocation){
+					System.out.println("SPLIT! " + currentFocus);	
+					int promote = findPromote(read.key, keyArray);		
+					split(read.key, promote);			
+					//latest array is the root
+					if (read.key == promote){
+						System.out.println("Insert promote! " + currentFocus);	
+						keyArray = Records.get(bt_rootLocation);
+						currentFocus = bt_rootLocation;
+						return;
+					}				
+					else{
+						searchNode(read, bt_rootLocation, 2);
+					}
+				//}
+				}				
+				
+			}			
+			/////////////////////////////////
 			int firstID = -1;
 			if(read.key > keyArray[index]){
 				firstID = keyArray[index+2];				
 				if(firstID==-1) return; //if has no child
 				else{ //going into the child = firstID	
-					if (keyArray[index+3]== -1 || read.key < keyArray[index+3]){
+					if(index == length - 3){
 						focus = firstID;
 						searchNode(read, focus, 2);
 					}
-					else{	
-						index+=3;
-						searchNode(read, focus, index);
+					else{
+						if (keyArray[index+3]== -1 || read.key < keyArray[index+3]){
+							focus = firstID;
+							searchNode(read, focus, 2);
+						}
+						else{	
+							index+=3;
+							searchNode(read, focus, index);
+						}
 					}
 				}
 			}
@@ -186,11 +250,12 @@ public class btdb{
 		int[] temp = keyArray; //current focus array		
 		int index = 2;	
 		int promote_value = 0;//offset_value
+		System.out.println("promote = " +  promote);
 		//create new child
 		createNew();
 		keyArray = Records.get(bt_recordCount-1);	//newly created child
 		
-		//update current array and new array
+		//update current array and new array to execute split
 		for(int i = 2; i < length; i = i+3){ //loop in temp	
 			if (temp[i] == promote){
 				promote_value = temp[i+1];
@@ -209,10 +274,11 @@ public class btdb{
 				index+=3;
 			}
 		}	
-		Newfocus = bt_recordCount-1;  //int Newfocus = bt_recordCount-1; //focus of new child	
-		
-		//PARENT_ARRAY
-		parent_array = Records.get(bt_rootLocation);				
+		Newfocus = bt_recordCount-1;  //focus of new child	
+				
+		parent_array = Records.get(bt_rootLocation);	
+
+		//FIRST NEW PARENT_ARRAY		
 		if(temp[0] == -1 && keyArray[0] == -1){ //if no parent and root, create new root
 			createNew(); //create new parent/root
 			bt_rootLocation = bt_recordCount-1; //new root location
@@ -222,6 +288,8 @@ public class btdb{
 			temp[0] = bt_rootLocation;
 		
 			//update records
+			System.out.println("currentFocus" + currentFocus);
+			System.out.println("Newfocus" + Newfocus);
 			Records.set(currentFocus, temp);			
 			Records.set(Newfocus, keyArray);
 			
@@ -232,28 +300,133 @@ public class btdb{
 			Records.set(bt_rootLocation, parent_array);
 		}
 		
-		if(temp[0] != -1){ //already with existing parent			
-			if(parent_array[13] != -1){ //full
-				System.out.print(parent_array[13] + " FULL");
+		keyArray[0] = bt_rootLocation;		
+		
+		for(int[] recordnum : Records){
+			for(int x : recordnum){
+				System.out.printf("%d ", x);
 			}
-			else{ //if not full
-				keyArray[0] = bt_rootLocation;				
-			}	
+			System.out.println();
+		}
+		System.out.println();		
+		
+		if(temp[0] != -1){ //already with existing parent			
+			if(parent_array[13] != -1){ //full parent
+				//SECOND NEW PARENT ARRAY				
+				System.out.println(parent_array[13] + "- PARENT FULL");
+				//createNew(); //create new parent/root
+				//bt_rootLocation = bt_recordCount-1; //new root location
+				
+				keyArray = parent_array;
+				currentFocus = bt_rootLocation;
+				split2(promote, findPromote(key, parent_array));
+				//searchNode2(promote, currentFocus, 2);
+				//insert();
+			}
+			//else{ //if parent not full, put parent # in 1st offset
+			//	keyArray[0] = bt_rootLocation;				
+			//}	
 		}		
 		//add promoted nodes if not same as key
 		if(key != promote){
 			//insert to root node			
 			promote_to_root(promote, promote_value,parent_array,Newfocus);		
 			Records.set(bt_rootLocation, parent_array);	
-		}
-			
-	}
+			for(int recordnum : parent_array){
+				System.out.printf("%d ", recordnum);
+			}
 	
-	public static int findPromote(int key){
+		System.out.println();	
+		}
+		
+		
+	}
+
+	public static void split2(int key, int promote){
+			//SPLIT CURRENT ARRAY TO 2
+		int[] parent_array = new int[length]; 
+		int[] temp = keyArray; //current focus array		
+		int index = 2;	
+		int promote_value = 0;//offset_value
+		System.out.println("promote = " +  promote);
+		//create new child
+		createNew();
+		keyArray = Records.get(bt_recordCount-1);	//newly created child
+		
+		//update current array and new array to execute split
+		for(int i = 2; i < length; i = i+3){ //loop in temp	
+			if (temp[i] == promote){
+				promote_value = temp[i+1];
+				temp[i] = -1;
+				temp[i+1] = -1;
+				temp[i+2] = -1;
+			}
+			else if(temp[i] > promote){
+				keyArray[index] = temp[i];
+				keyArray[index+1] = temp[i+1];
+				//keyArray[index+2] = temp[i+2]; //no need for child reference
+				
+				temp[i] = -1;
+				temp[i+1] = -1;
+				temp[i+2] = -1;
+				index+=3;
+			}
+		}	
+		Newfocus = bt_recordCount-1;  //focus of new child	
+				
+		parent_array = Records.get(bt_rootLocation);	
+
+		//FIRST NEW PARENT_ARRAY		
+		if(temp[0] == -1 && keyArray[0] == -1){ //if no parent and root, create new root
+			createNew(); //create new parent/root
+			bt_rootLocation = bt_recordCount-1; //new root location
+			
+			//Assign parent node to children
+			keyArray[0] = bt_rootLocation; 	
+			temp[0] = bt_rootLocation;
+		
+			//update records
+			System.out.println("currentFocus" + currentFocus);
+			System.out.println("Newfocus" + Newfocus);
+			Records.set(currentFocus, temp);			
+			Records.set(Newfocus, keyArray);
+			
+			parent_array = Records.get(bt_rootLocation);
+			//Assign children to parent
+			parent_array[1] = currentFocus;
+			parent_array[1+3] = Newfocus;
+			Records.set(bt_rootLocation, parent_array);
+		}
+		
+		keyArray[0] = bt_rootLocation;		
+		
+		for(int[] recordnum : Records){
+			for(int x : recordnum){
+				System.out.printf("%d ", x);
+			}
+			System.out.println();
+		}
+		System.out.println();		
+				
+		//add promoted nodes if not same as key
+		if(key != promote){
+			//insert to root node			
+			promote_to_root(promote, promote_value,parent_array,Newfocus);		
+			Records.set(bt_rootLocation, parent_array);	
+			for(int recordnum : parent_array){
+				System.out.printf("%d ", recordnum);
+			}
+	
+		System.out.println();		
+		}
+		
+		
+	}
+	public static int findPromote(int key, int[] currentArray){
 		//if index is equal to mid of m, that is to be promoted
 		int index = 0;		
 		for(int i = 2; i < length; i = i+3){
-			int keyTemp = keyArray[i];	
+			int keyTemp = currentArray[i];	
 			if (key < keyTemp){	
 				if (index == m/2){
 					return key;
@@ -261,7 +434,7 @@ public class btdb{
 				index++;
 			}
 			if (index == m/2){
-				return keyArray[i];				
+				return currentArray[i];				
 			}
 			index++;
 		}
@@ -270,6 +443,13 @@ public class btdb{
 	
 	public static void promote_to_root(int key, int offset_value, int[] parent_array, int Newfocus){
 		//keyArray = keyArray[i]
+		System.out.println("PROMOTE TO ROOT");	
+		for(int recordnum : parent_array){
+				System.out.printf("%d ", recordnum);
+			}
+	
+		System.out.println();		
+		
 		for(int i = 2; i < length; i = i+3){
 			int keyTemp = parent_array[i];
 			if(keyTemp == -1){ 							//if empty space
