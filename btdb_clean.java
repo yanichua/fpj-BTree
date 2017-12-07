@@ -236,7 +236,6 @@ public class btdb_clean {
 		}
 	}
 	
-
 	public static int[] popPromote(int index, int[] bt) {
 		int mid;
 		if(m%2==0) mid = (m/2-1)*3-1;
@@ -299,10 +298,11 @@ public class btdb_clean {
 		}
 	}
 	
-	public static void promote() {
-		
+public static void promote() {		
 		System.out.println("promote start " + Arrays.toString(keyArray));
+		System.out.println("keyArray[0] " + keyArray[0]);
 		if(keyArray[0]==-1) {					//if no parent
+			System.out.println("no parent ");
 			createNew(); 							//create new parent
 			bt_rootLocation = bt_recordCount;		//new root
 			keyArray[0]= bt_recordCount;
@@ -314,23 +314,26 @@ public class btdb_clean {
 			keyArray[4] = destArray_index;
 			keyArray_index = bt_recordCount;
 		}
-		else														//if with parent
-		{											
+		else														
+		{	//if with parent
+			System.out.println("with parent ");														
 			keyArray_index = keyArray[0];
 			keyArray=Records.get(keyArray[0]);							//check if parent is full
 			System.out.println("keyArray "+ Arrays.toString(keyArray)); //print the parent array/current root
 			if (keyArray[length-1] == -1){
+				System.out.println("not full ");
 				root_insert(2);
 				dest_Array[0]=keyArray_index;
 			}
-			else{
-				//parent is full, do new promotion
+			else{													//parent is full, do new promotion
+				System.out.println("full ");
+				split(keyArray_index);
 			}
 		}
 	}
 	
 	public static void move_out(int index,int dest_index) {
-		if(index>length-2) return;
+		if(index>length-1) return;		//if(index>length-2) return;
 		else {
 			System.out.println("hdfsk");
 			dest_Array[dest_index]=keyArray[index];
