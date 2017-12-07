@@ -183,41 +183,12 @@ public class btdb_clean {
 			 move_forward(index+=3, temp, last);
 		}
 	}
-	
-/**	public static void move_reverse(int index, int[] bt, int last) {
-		System.out.println("index");
-		System.out.println(Arrays.toString(keyArray));
-		if(index<last) return;
-		else {
-			 int[] temp = {keyArray[index-1], keyArray[index], keyArray[index+1]};
-			 keyArray[index-1]=bt[0];
-			 keyArray[index]=bt[1];
-			 keyArray[index+1]=bt[2]; 	
-			 move_reverse(index-=3, temp, last);
-		}
-	} **/
-	
-/**	public static int findPromote(int index) {
-		int order = (index+1)/2;
-		if(m%2==1) {
-			int low_mid = (m/2)*3-1;
-			int high_mid = low_mid+3;
-			if(index<low_mid) return low_mid;
-			else if(index<high_mid) return index;
-			else return high_mid;
-		}
-		else {
-			int mid = (m/2)*3-1;
-			int nextmid = mid+3;
-			if(order<mid) return mid;
-			else if (order>nextmid) return nextmid;
-			else return index;
-		}
-	} **/
+
 	public static int[] popForward(int index, int[] bt, int mid) {
 		if(index>mid) return bt;
 		else {
 			 int[] temp = {keyArray[index], keyArray[index+1], keyArray[index+2]};
+			 //keyArray[index-1]=bt[0-1];
 			 keyArray[index]=bt[0];
 			 keyArray[index+1]=bt[1];
 			 keyArray[index+2]=bt[2];
@@ -236,6 +207,7 @@ public class btdb_clean {
 		}
 	}
 	
+
 	public static int[] popPromote(int index, int[] bt) {
 		int mid;
 		if(m%2==0) mid = (m/2-1)*3-1;
@@ -250,10 +222,10 @@ public class btdb_clean {
 	
 	public static void split(int index) {
 		createNew();
-		int[] bt = {read.key, read.offset, -1};
+		int[] bt = {read.key, read.offset, keyArray[index+2]};
 		int[] promote_array = popPromote(index, bt);
 		//int[] promote_array = {keyArray[promote-1], keyArray[promote], keyArray[promote+1]};
-		
+		//System.out.println("bt- " + Arrays.toString(bt));
 		//if(index<=promote) move_forward(index, bt , promote-3);
 		//else if(index>promote) move_reverse(index-3, bt, promote);
 		dest_Array = Records.get(bt_recordCount);
@@ -269,14 +241,35 @@ public class btdb_clean {
 			mid = (m/2+1)*3-1;
 			move_out(mid, 2);
 		}
+		
+		//for parent of new child? ===current fix
+		dest_Array[0] = keyArray[0];
 		promote();
-		System.out.println("promote " + Arrays.toString(promote_array));
 	}
 	
 	public static void root_insert(int index) {
-		if(index==length) {
-			split(index);
-			return;
+		
+		if(keyArray[length-3]!=-1) {
+			System.out.println("HERE");
+			if(keyArray[index]<read.key) root_insert(index+=3);
+			else if(index==length) {
+				System.out.println("in index-1");
+				System.out.println("Before - " + Arrays.toString(keyArray));
+				keyArray[index-1]=destArray_index;
+				System.out.println("After - " + Arrays.toString(keyArray));
+				split(index-3);
+			}
+			else {
+				System.out.println("in index+2");
+				System.out.println("Before - " + Arrays.toString(keyArray));
+				keyArray[index+2]=destArray_index;
+				System.out.println("After - " + Arrays.toString(keyArray));
+				split(index);
+			}
+			System.out.println("current key array " + Arrays.toString(keyArray));
+			System.out.println("destArray_index - " + destArray_index);
+			//System.out.println("dest_index - " + dest_index);
+			update_parents(destArray_index);
 		}
 		else if(keyArray[index]==-1) {
 			keyArray[index] = read.key;
@@ -291,20 +284,13 @@ public class btdb_clean {
 				int[] bt = {read.key, read.offset, destArray_index};
 				move_forward(index, bt, length);
 			}
-			/**}
-			int[] bt = {-1, read.key, read.offset};
-			move_forward(index, bt, length);
-			System.out.printf("< %d inserted.\n", read.key);**/
 		}
 	}
 	
-public static void promote() {		
-		System.out.println("promote start " + Arrays.toString(keyArray));
-		System.out.println("keyArray[0] " + keyArray[0]);
-		if(keyArray[0]==-1) {					//if no parent
-			System.out.println("no parent ");
-			createNew(); 							//create new parent
-			bt_rootLocation = bt_recordCount;		//new root
+	public static void promote() {
+		if(keyArray[0]==-1) {
+			createNew();
+			bt_rootLocation = bt_recordCount;
 			keyArray[0]= bt_recordCount;
 			dest_Array[0]=bt_recordCount;
 			keyArray = Records.get(bt_recordCount);
@@ -314,26 +300,36 @@ public static void promote() {
 			keyArray[4] = destArray_index;
 			keyArray_index = bt_recordCount;
 		}
-		else														
-		{	//if with parent
-			System.out.println("with parent ");														
+		else
+		{
 			keyArray_index = keyArray[0];
-			keyArray=Records.get(keyArray[0]);							//check if parent is full
-			System.out.println("keyArray "+ Arrays.toString(keyArray)); //print the parent array/current root
-			if (keyArray[length-1] == -1){
-				System.out.println("not full ");
-				root_insert(2);
-				dest_Array[0]=keyArray_index;
-			}
-			else{													//parent is full, do new promotion
-				System.out.println("full ");
-				split(keyArray_index);
+			keyArray=Records.get(keyArray[0]);
+			System.out.println("keyArray "+keyArray_index);
+			root_insert(2);
+			dest_Array[0]=keyArray_index;
+		}
+	}
+	public static void update_parents(int ParentNum){
+		//boolean up = false;
+		System.out.println("update parents");	
+		int[] parentArray = Records.get(ParentNum);
+		System.out.println("Parent - " + Arrays.toString(parentArray));
+		
+		for (int i = 1; i < length; i = i+3){	
+			if(parentArray[i] != -1){				
+				int[] temp_array = Records.get(parentArray[i]); //get records under new parent	
+				temp_array[0]= ParentNum;//Records.get(i)
+				System.out.println("current key array " + Arrays.toString(temp_array));
+				
+				
+				//Records.set(A[i], temp_array);	
+				//up = true;	
 			}
 		}
 	}
 	
 	public static void move_out(int index,int dest_index) {
-		if(index>length-1) return;		//if(index>length-2) return;
+		if(index==length) return;
 		else {
 			System.out.println("hdfsk");
 			dest_Array[dest_index]=keyArray[index];
@@ -358,7 +354,7 @@ public static void promote() {
 			for(int x : recordnum){
 				System.out.printf("%d ", x);
 			}
-			System.out.println();
+		System.out.println();
 		}
 		System.out.println();
 		bt.close();
@@ -395,7 +391,4 @@ public static void promote() {
 			else select(index+=3);
 		}
 	}
-	
-	
-
 }
