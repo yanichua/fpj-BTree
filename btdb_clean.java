@@ -223,11 +223,13 @@ public class btdb_clean {
 	}
 	
 	public static void split(int index) {
+		System.out.println("index- " + index);
 		createNew();
 		int[] bt = {read.key, read.offset, keyArray[index+2]};
 		int[] promote_array = popPromote(index, bt);
 		//int[] promote_array = {keyArray[promote-1], keyArray[promote], keyArray[promote+1]};
-		//System.out.println("bt- " + Arrays.toString(bt));
+		System.out.println("bt- " + Arrays.toString(bt));
+		System.out.println("promote_array- " + Arrays.toString(promote_array));
 		//if(index<=promote) move_forward(index, bt , promote-3);
 		//else if(index>promote) move_reverse(index-3, bt, promote);
 		dest_Array = Records.get(bt_recordCount);
@@ -254,22 +256,30 @@ public class btdb_clean {
 	}
 	
 	public static void root_insert(int index) {
-		
+		System.out.println("in index = " + index);
 		if(keyArray[length-3]!=-1) {
 			System.out.println("HERE");
+			System.out.println("keyArray[index] = " + keyArray[index]);
+			System.out.println("key = " + read.key);
 			if(keyArray[index]<read.key) root_insert(index+=3);
 			else if(index==length) {
 				System.out.println("in index-1");
 				System.out.println("Before - " + Arrays.toString(keyArray));
-				keyArray[index-1]=destArray_index;
+				keyArray[index-1]= destArray_index;
 				System.out.println("After - " + Arrays.toString(keyArray));
 				split(index-3);
 			}
 			else {
 				System.out.println("in index+2");
 				System.out.println("Before - " + Arrays.toString(keyArray));
+				
 				right = keyArray[index+2];
+				
+				int index_update = check_children(index, keyArray[index]); //[TRY]
+				
 				keyArray[index+2]=destArray_index;
+				//keyArray[index_update]=destArray_index;
+				
 				System.out.println("After - " + Arrays.toString(keyArray));
 				split(index);
 			}
@@ -279,6 +289,7 @@ public class btdb_clean {
 			update_parents(destArray_index);
 		}
 		else if(keyArray[index]==-1) {
+			System.out.println("root_insert " + Arrays.toString(keyArray));
 			keyArray[index] = read.key;
 			keyArray[index+1] = read.offset;
 			keyArray[index+2] = destArray_index;
@@ -293,7 +304,16 @@ public class btdb_clean {
 			}
 		}
 	}
-	
+	public static int check_children(int index, int keyArrayindexvalue){
+		int[] destArray = Records.get(destArray_index);
+		System.out.println("destArray " + Arrays.toString(destArray));		
+		if (destArray[2] < keyArrayindexvalue){
+			return index-1;
+		}
+		else{
+			return index+2;
+		}
+	}
 	public static void promote() {
 		if(keyArray[0]==-1) {
 			createNew();
