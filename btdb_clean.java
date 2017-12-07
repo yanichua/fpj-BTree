@@ -34,7 +34,7 @@ public class btdb_clean {
 	public static ArrayList<String> Values = new ArrayList<String>(); // record of all values
 	public static int[] keyArray; //array in focus
 	public static int[] dest_Array; //destination array
-	
+	public static int right =-1;
 	//generalized input Object
 	public static class Input{
 		String command;
@@ -74,6 +74,8 @@ public class btdb_clean {
 			/** figure out universal searchnode**/
 			int ref_index = searchNode(bt_rootLocation,2);
 			System.out.println("search done");
+			//int right =-1;
+			right =-1;
 			switch(read.command) {
 				case CMD_INSERT:
 					insert(ref_index);
@@ -114,9 +116,9 @@ public class btdb_clean {
 	}
 	
 	public static int searchNode(int focus, int index) {
-		System.out.println("focus " + focus + " index "+ index);
+		//System.out.println("focus " + focus + " index "+ index);
 		int temp_leftchild = keyArray[index-1];
-		System.out.println("leftchild" + temp_leftchild);
+		//System.out.println("leftchild" + temp_leftchild);
 		if(index==length) {
 			if(keyArray[index-1]==-1) return index-3;
 			else return searchNode(temp_leftchild, 2);
@@ -124,9 +126,9 @@ public class btdb_clean {
 		else {
 			keyArray = Records.get(focus);
 			int temp_rightchild = keyArray[index+2];
-			System.out.println("rightchild" + temp_rightchild);
+			//System.out.println("rightchild" + temp_rightchild);
 			temp_leftchild = keyArray[index-1];
-			System.out.println("leftchild" + temp_leftchild);
+			//System.out.println("leftchild" + temp_leftchild);
 			keyArray_index = focus;
 			int temp_key = keyArray[index];
 			if(temp_key==-1) {
@@ -142,9 +144,9 @@ public class btdb_clean {
 				return searchNode(focus, index+=3);
 			}
 			else {
-				System.out.println(index);
-				System.out.println("nhshbsd");
-				System.out.println(temp_leftchild);
+				//System.out.println(index);
+				//System.out.println("nhshbsd");
+				//System.out.println(temp_leftchild);
 				if (temp_leftchild==-1) return index;
 				else return searchNode(temp_leftchild,2);
 			}
@@ -241,9 +243,13 @@ public class btdb_clean {
 			mid = (m/2+1)*3-1;
 			move_out(mid, 2);
 		}
-		
+		System.out.println("right - " + right);
+		dest_Array[1]=right;
 		//for parent of new child? ===current fix
+		System.out.println("parent - " + keyArray[0]);
+		System.out.println("before update parent - " + Arrays.toString(dest_Array));
 		dest_Array[0] = keyArray[0];
+		System.out.println("udpated parent - " + Arrays.toString(dest_Array));
 		promote();
 	}
 	
@@ -262,6 +268,7 @@ public class btdb_clean {
 			else {
 				System.out.println("in index+2");
 				System.out.println("Before - " + Arrays.toString(keyArray));
+				right = keyArray[index+2];
 				keyArray[index+2]=destArray_index;
 				System.out.println("After - " + Arrays.toString(keyArray));
 				split(index);
@@ -320,10 +327,7 @@ public class btdb_clean {
 				int[] temp_array = Records.get(parentArray[i]); //get records under new parent	
 				temp_array[0]= ParentNum;//Records.get(i)
 				System.out.println("current key array " + Arrays.toString(temp_array));
-				
-				
-				//Records.set(A[i], temp_array);	
-				//up = true;	
+			
 			}
 		}
 	}
