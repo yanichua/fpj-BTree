@@ -1,7 +1,7 @@
 import java.util.*;
 import java.io.*;
 public class btdb_clean {
-	//java -Xmx32M btdb Data.bt Data.values
+	//java -Xmx32M btdb_clean Data.bt Data.values
 	
 	//global variables initialization
 	
@@ -246,12 +246,12 @@ public class btdb_clean {
 		int midpop;
 		if(m%2==0) { 
 			mid = (m/2-1)*3-1;
-			move_out(mid+3, 2);//move_out(mid+2, 1); //move_out(mid+3, 2);
+			move_out(mid+2, 1); //move_out(mid+3, 2); //move_out(mid+2, 1);// //move_out(mid+3, 2);
 			midpop = mid+2;
 		}
 		else  {
 			mid = (m/2+1)*3-1;
-			move_out(mid, 2); //move_out(mid-1, 1); //move_out(mid, 2);
+			move_out(mid-1, 1); //move_out(mid, 2);  //move_out(mid-1, 1); // //move_out(mid, 2);
 			midpop = mid-1;
 			
 		}
@@ -267,10 +267,14 @@ public class btdb_clean {
 			if(check_children(index, keyArray[index]) != midpop){
 				keyArray[midpop] = popForwardReserve;
 			}
+			//else{
+				//dest_Array[1] = popForwardReserve;
+			//}
+			
 		}
-		else{
-			keyArray[index-1]=popReverseReserve;
-		}
+		//else{
+		//	keyArray[index-1]=popReverseReserve;
+		//}
 		System.out.println("keyArray after moveout - " + Arrays.toString(keyArray));
 		//
 		//dest_Array[1]=right;
