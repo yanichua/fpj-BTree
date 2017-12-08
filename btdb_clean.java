@@ -36,7 +36,7 @@ public class btdb_clean {
 	public static int[] dest_Array; //destination array
 	public static boolean parent = false;
 	public static int popForwardReserve = 0;
-	public static int popReverseReserve = 0;
+	public static int moveOutReserve = 0;
 	//generalized input Object
 	public static class Input{
 		String command;
@@ -244,17 +244,19 @@ public class btdb_clean {
 		read.offset = promote_array[2];//[1]
 		int mid;
 		int midpop;
+		
 		if(m%2==0) { 
 			mid = (m/2-1)*3-1;
-			move_out(mid+2, 1); //move_out(mid+3, 2); //move_out(mid+2, 1);// //move_out(mid+3, 2);
+			move_out(mid+3, 2); //move_out(mid+2, 1);// //move_out(mid+3, 2);
 			midpop = mid+2;
 		}
 		else  {
 			mid = (m/2+1)*3-1;
-			move_out(mid-1, 1); //move_out(mid, 2);  //move_out(mid-1, 1); // //move_out(mid, 2);
-			midpop = mid-1;
-			
+			move_out(mid, 2);  //move_out(mid-1, 1); // //move_out(mid, 2);
+			midpop = mid-1;			
 		}
+		moveOutReserve = keyArray[midpop];
+		
 		System.out.println("mid - " + mid);	
 		System.out.println("popForwardReserve - " + popForwardReserve);	
 		 //= popForwardReserve;
@@ -265,11 +267,14 @@ public class btdb_clean {
 		if (parent == true){		
 			keyArray[check_children(index, keyArray[index])] = destArray_index-1;	
 			if(check_children(index, keyArray[index]) != midpop){
+				System.out.println("popForwardReserve mid");	
 				keyArray[midpop] = popForwardReserve;
+				dest_Array[1] = moveOutReserve;
 			}
-			//else{
-				//dest_Array[1] = popForwardReserve;
-			//}
+			else{	
+				System.out.println("popForwardReserve 1");	
+				dest_Array[1] = popForwardReserve;
+			}
 			
 		}
 		//else{
