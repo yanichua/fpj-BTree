@@ -34,7 +34,9 @@ public class btdb_clean {
 	public static ArrayList<String> Values = new ArrayList<String>(); // record of all values
 	public static int[] keyArray; //array in focus
 	public static int[] dest_Array; //destination array
-	public static int right =-1;
+	public static boolean parent = false;
+	public static int popForwardReserve = 0;
+	public static int popReverseReserve = 0;
 	//generalized input Object
 	public static class Input{
 		String command;
@@ -75,7 +77,7 @@ public class btdb_clean {
 			int ref_index = searchNode(bt_rootLocation,2);
 			System.out.println("search done");
 			//int right =-1;
-			right =-1;
+			parent = false;
 			switch(read.command) {
 				case CMD_INSERT:
 					insert(ref_index);
@@ -116,9 +118,7 @@ public class btdb_clean {
 	}
 	
 	public static int searchNode(int focus, int index) {
-		//System.out.println("focus " + focus + " index "+ index);
 		int temp_leftchild = keyArray[index-1];
-		//System.out.println("leftchild" + temp_leftchild);
 		if(index==length) {
 			if(keyArray[index-1]==-1) return index-3;
 			else return searchNode(temp_leftchild, 2);
@@ -126,9 +126,7 @@ public class btdb_clean {
 		else {
 			keyArray = Records.get(focus);
 			int temp_rightchild = keyArray[index+2];
-			//System.out.println("rightchild" + temp_rightchild);
 			temp_leftchild = keyArray[index-1];
-			//System.out.println("leftchild" + temp_leftchild);
 			keyArray_index = focus;
 			int temp_key = keyArray[index];
 			if(temp_key==-1) {
@@ -144,9 +142,6 @@ public class btdb_clean {
 				return searchNode(focus, index+=3);
 			}
 			else {
-				//System.out.println(index);
-				//System.out.println("nhshbsd");
-				//System.out.println(temp_leftchild);
 				if (temp_leftchild==-1) return index;
 				else return searchNode(temp_leftchild,2);
 			}
@@ -167,50 +162,63 @@ public class btdb_clean {
 				split(index);
 				return;
 			}
-			int[] bt = {read.key, read.offset, -1};
+			int[] bt = {-1, read.key, read.offset, -1};
 			move_forward(index, bt, length);
 			System.out.printf("< %d inserted.\n", read.key);
 		}
 	}
 	
 	public static void move_forward(int index, int[] bt, int last) {
-		System.out.println(index +" "+ last);
-		System.out.println(Arrays.toString(keyArray));
+		System.out.println("============ move_forward ============");		
 		if(bt[1]==-1 || index>=last) return;
 		else {
-			 int[] temp = {keyArray[index], keyArray[index+1], keyArray[index+2]};
-			 keyArray[index]=bt[0];
-			 keyArray[index+1]=bt[1];
-			 keyArray[index+2]=bt[2];
+			 int[] temp = {keyArray[index-1], keyArray[index], keyArray[index+1], keyArray[index+2]};
+			 System.out.println("bt - " + Arrays.toString(bt));
+			 System.out.println("Before key array - " + Arrays.toString(keyArray));
+			 keyArray[index]=bt[1];
+			 keyArray[index+1]=bt[2];
+			 keyArray[index+2]=bt[3];
+			 System.out.println("After key array - " + Arrays.toString(keyArray));
 			 move_forward(index+=3, temp, last);
 		}
 	}
 
 	public static int[] popForward(int index, int[] bt, int mid) {
+		System.out.println("============ popForward ============");
 		if(index>mid) return bt;
-		else {
-			 int[] temp = {keyArray[index], keyArray[index+1], keyArray[index+2]};
-			 //keyArray[index-1]=bt[0-1];
-			 keyArray[index]=bt[0];
-			 keyArray[index+1]=bt[1];
-			 keyArray[index+2]=bt[2];
+		else {			
+			 int[] temp = {keyArray[index-1], keyArray[index], keyArray[index+1], keyArray[index+2]};
+			 System.out.println("bt - " + Arrays.toString(bt));
+			 System.out.println("Before key array - " + Arrays.toString(keyArray));
+			 keyArray[index]=bt[1];
+			 keyArray[index+1]=bt[2];
+			 //keyArray[index+2]=bt[3];
+			 popForwardReserve = bt[3];
+			 System.out.println("After key array - " + Arrays.toString(keyArray));
 			 return popForward(index+=3, temp, mid);
 		}
 	}
 	public static int[] popReverse(int index, int[] bt, int mid) {
+		System.out.println("============ popReverse ============");
 		System.out.println(Arrays.toString(bt));
 		if(index==mid) return bt;
 		else {
-			 int[] temp = {keyArray[index], keyArray[index+1], keyArray[index+2]};
-			 keyArray[index]=bt[0];
-			 keyArray[index+1]=bt[1];
-			 keyArray[index+2]=bt[2];
+			 System.out.println("bt - " + Arrays.toString(bt));
+			 System.out.println("Before key array - " + Arrays.toString(keyArray));
+			 int[] temp = {keyArray[index-1], keyArray[index], keyArray[index+1], keyArray[index+2]};
+			 //popReverseReserve = bt[0];
+			 keyArray[index-1]=bt[0];
+			 keyArray[index]=bt[1];
+			 keyArray[index+1]=bt[2];
+			 keyArray[index+2]=bt[3];
+			 System.out.println("After key array - " + Arrays.toString(keyArray));
 			 return popReverse(index-=3, temp, mid);
 		}
 	}
 	
 
 	public static int[] popPromote(int index, int[] bt) {
+		System.out.println("============ popPromote ============");
 		int mid;
 		if(m%2==0) mid = (m/2-1)*3-1;
 		else  mid = (m/2)*3-1;
@@ -223,30 +231,49 @@ public class btdb_clean {
 	}
 	
 	public static void split(int index) {
+		System.out.println("============ split ============");
 		System.out.println("index- " + index);
 		createNew();
-		int[] bt = {read.key, read.offset, keyArray[index+2]};
-		int[] promote_array = popPromote(index, bt);
-		//int[] promote_array = {keyArray[promote-1], keyArray[promote], keyArray[promote+1]};
-		System.out.println("bt- " + Arrays.toString(bt));
-		System.out.println("promote_array- " + Arrays.toString(promote_array));
-		//if(index<=promote) move_forward(index, bt , promote-3);
-		//else if(index>promote) move_reverse(index-3, bt, promote);
+		int[] bt = {keyArray[index-1], read.key, read.offset, keyArray[index+2]};
+		System.out.println("bt - " + Arrays.toString(bt));
+		int[] promote_array = popPromote(index, bt);		
+		System.out.println("promote_array - " + Arrays.toString(promote_array));	
 		dest_Array = Records.get(bt_recordCount);
 		destArray_index = bt_recordCount;
-		read.key = promote_array[0];
-		read.offset = promote_array[1];
+		read.key = promote_array[1]; //[0]
+		read.offset = promote_array[2];//[1]
 		int mid;
+		int midpop;
 		if(m%2==0) { 
 			mid = (m/2-1)*3-1;
-			move_out(mid+3, 2);
+			move_out(mid+3, 2);//move_out(mid+2, 1); //move_out(mid+3, 2);
+			midpop = mid+2;
 		}
 		else  {
 			mid = (m/2+1)*3-1;
-			move_out(mid, 2);
+			move_out(mid, 2); //move_out(mid-1, 1); //move_out(mid, 2);
+			midpop = mid-1;
+			
 		}
-		System.out.println("right - " + right);
-		dest_Array[1]=right;
+		System.out.println("mid - " + mid);	
+		System.out.println("popForwardReserve - " + popForwardReserve);	
+		 //= popForwardReserve;
+		System.out.println("keyArray - " + Arrays.toString(keyArray));
+		System.out.println("parent boolean - " + parent);
+		System.out.println("destArray_index - " + destArray_index);
+		//keyArray[index+2] = popForwardReserve;
+		if (parent == true){		
+			keyArray[check_children(index, keyArray[index])] = destArray_index-1;	
+			if(check_children(index, keyArray[index]) != midpop){
+				keyArray[midpop] = popForwardReserve;
+			}
+		}
+		else{
+			keyArray[index-1]=popReverseReserve;
+		}
+		System.out.println("keyArray after moveout - " + Arrays.toString(keyArray));
+		//
+		//dest_Array[1]=right;
 		//for parent of new child? ===current fix
 		System.out.println("parent - " + keyArray[0]);
 		System.out.println("before update parent - " + Arrays.toString(dest_Array));
@@ -254,38 +281,35 @@ public class btdb_clean {
 		System.out.println("udpated parent - " + Arrays.toString(dest_Array));
 		promote();
 	}
+	public static int check_children(int index, int keyArrayindexvalue){
+		System.out.println("============ check_children ============");
+		System.out.println("keyArrayindexvalue - " + keyArrayindexvalue);
+		
+		int[] destArray = Records.get(destArray_index-1);	
+		System.out.println("destArray - " + Arrays.toString(destArray));
+		if (destArray[2] < keyArrayindexvalue){		
+			return index-1;			
+		}
+		else{		
+			return index+2;
+		}
+	}
 	
 	public static void root_insert(int index) {
-		System.out.println("in index = " + index);
+		System.out.println("============ root_insert ============");
+		System.out.println("index = " + index);
 		if(keyArray[length-3]!=-1) {
+			parent = true;
 			System.out.println("HERE");
 			System.out.println("keyArray[index] = " + keyArray[index]);
 			System.out.println("key = " + read.key);
 			if(keyArray[index]<read.key) root_insert(index+=3);
-			else if(index==length) {
-				System.out.println("in index-1");
-				System.out.println("Before - " + Arrays.toString(keyArray));
-				keyArray[index-1]= destArray_index;
-				System.out.println("After - " + Arrays.toString(keyArray));
-				split(index-3);
-			}
 			else {
-				System.out.println("in index+2");
-				System.out.println("Before - " + Arrays.toString(keyArray));
-				
-				right = keyArray[index+2];
-				
-				int index_update = check_children(index, keyArray[index]); //[TRY]
-				
-				keyArray[index+2]=destArray_index;
-				//keyArray[index_update]=destArray_index;
-				
-				System.out.println("After - " + Arrays.toString(keyArray));
+				System.out.println("split parent");
 				split(index);
 			}
 			System.out.println("current key array " + Arrays.toString(keyArray));
 			System.out.println("destArray_index - " + destArray_index);
-			//System.out.println("dest_index - " + dest_index);
 			update_parents(destArray_index);
 		}
 		else if(keyArray[index]==-1) {
@@ -299,22 +323,16 @@ public class btdb_clean {
 			if(keyArray[index]<read.key) root_insert(index+=3);
 			//if(keyArray[length-3]!=-1) {
 			else {
-				int[] bt = {read.key, read.offset, destArray_index};
+				
+				int[] bt = {-1, read.key, read.offset, destArray_index};
+				System.out.println("root_insert " + Arrays.toString(bt));
 				move_forward(index, bt, length);
 			}
 		}
 	}
-	public static int check_children(int index, int keyArrayindexvalue){
-		int[] destArray = Records.get(destArray_index);
-		System.out.println("destArray " + Arrays.toString(destArray));		
-		if (destArray[2] < keyArrayindexvalue){
-			return index-1;
-		}
-		else{
-			return index+2;
-		}
-	}
+	
 	public static void promote() {
+		System.out.println("============ promote ============");
 		if(keyArray[0]==-1) {
 			createNew();
 			bt_rootLocation = bt_recordCount;
@@ -338,7 +356,7 @@ public class btdb_clean {
 	}
 	public static void update_parents(int ParentNum){
 		//boolean up = false;
-		System.out.println("update parents");	
+		System.out.println("============ update_parents ============");
 		int[] parentArray = Records.get(ParentNum);
 		System.out.println("Parent - " + Arrays.toString(parentArray));
 		
@@ -353,9 +371,12 @@ public class btdb_clean {
 	}
 	
 	public static void move_out(int index,int dest_index) {
+		System.out.println("============ move_out ============");
 		if(index==length) return;
 		else {
 			System.out.println("hdfsk");
+			System.out.println("dest_Array - " + Arrays.toString(dest_Array));
+			System.out.println("keyArray - " + Arrays.toString(keyArray));
 			dest_Array[dest_index]=keyArray[index];
 			keyArray[index] =-1;
 			move_out(index+1, dest_index+1);
@@ -398,6 +419,7 @@ public class btdb_clean {
 		if(index==length || keyArray[index]>read.key) {
 			System.out.printf("< ERROR: %d does not exist. \n", read.key);
 		}
+		//else if(keyArray[index]==read.key) {
 		else if(keyArray[index]==read.key) {
 			Values.set(keyArray[index+1], read.value);
 			System.out.println(Values.get(keyArray[index+1]));
