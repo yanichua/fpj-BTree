@@ -1,8 +1,7 @@
 import java.util.*;
 import java.io.*;
 public class btdb_clean {
-	//java -Xmx32M btdb_clean Data.bt Data.values
-	
+	//java -Xmx32M btdb_clean Data.bt Data.values	
 	//global variables initialization
 	
 	//Files to open
@@ -37,6 +36,9 @@ public class btdb_clean {
 	public static boolean parent = false;
 	public static int popForwardReserve = 0;
 	public static int moveOutReserve = 0;
+	
+	public static int promoteValue = -1;
+	
 	//generalized input Object
 	public static class Input{
 		String command;
@@ -76,7 +78,7 @@ public class btdb_clean {
 			/** figure out universal searchnode**/
 			int ref_index = searchNode(bt_rootLocation,2);
 			System.out.println("search done");
-			//int right =-1;
+			promoteValue =-1;
 			parent = false;
 			switch(read.command) {
 				case CMD_INSERT:
@@ -237,6 +239,8 @@ public class btdb_clean {
 		int[] bt = {keyArray[index-1], read.key, read.offset, keyArray[index+2]};
 		System.out.println("bt - " + Arrays.toString(bt));
 		int[] promote_array = popPromote(index, bt);		
+				
+		
 		System.out.println("promote_array - " + Arrays.toString(promote_array));	
 		dest_Array = Records.get(bt_recordCount);
 		destArray_index = bt_recordCount;
@@ -264,19 +268,36 @@ public class btdb_clean {
 		System.out.println("parent boolean - " + parent);
 		System.out.println("destArray_index - " + destArray_index);
 		//keyArray[index+2] = popForwardReserve;
-		if (parent == true){		
-			keyArray[check_children(index, keyArray[index])] = destArray_index-1;	
-			if(check_children(index, keyArray[index]) != midpop){
-				System.out.println("popForwardReserve mid");	
-				keyArray[midpop] = popForwardReserve;
-				dest_Array[1] = moveOutReserve;
+		System.out.println("moveOutReserve - " + moveOutReserve);
+		if (parent == true){
+			if(promoteValue !=  promote_array[1]){
+				System.out.println("===Promote ===");
+				keyArray[check_children(index, keyArray[index])] = destArray_index-1;	
+				if(check_children(index, keyArray[index]) != midpop){
+					System.out.println("popForwardReserve mid");	
+					keyArray[midpop] = popForwardReserve;
+					dest_Array[1] = moveOutReserve;
+				}
+				else{	
+					System.out.println("popForwardReserve 1");	
+					dest_Array[1] = popForwardReserve;
+				}
+			}			
+			else{
+				System.out.println("===PromoteSAme ===");
+				keyArray[check_children(index-3, keyArray[index-3])] = destArray_index-1;	
+				if(check_children(index, keyArray[index-3]) != midpop){
+					System.out.println("popForwardReserve mid");	
+					keyArray[midpop] = moveOutReserve; //popForwardReserve;
+					dest_Array[1] = destArray_index-1;	//moveOutReserve;
+				}
+				else{	
+					System.out.println("popForwardReserve 1");	
+					dest_Array[1] = popForwardReserve;
+				}
 			}
-			else{	
-				System.out.println("popForwardReserve 1");	
-				dest_Array[1] = popForwardReserve;
-			}
-			
 		}
+		promoteValue = promote_array[1];
 		//else{
 		//	keyArray[index-1]=popReverseReserve;
 		//}
