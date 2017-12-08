@@ -275,12 +275,9 @@ public class btdb_clean {
 		System.out.println("dest_Array - " + Arrays.toString(dest_Array));	
 				
 		if (parent == true){	
-			if(index <= mid){
-					
+			if(index <= mid){					
 				if(promoteValue !=  promote_array[1]){
-					System.out.println("=== Promote ===");
-					//update_ids(index,index,popForwardReserve,moveOutReserve)
-					
+					System.out.println("=== Promote ===");					
 					keyArray[check_children(index, keyArray[index])] = destArray_index-1;	
 					if(check_children(index, keyArray[index]) != midpop){
 						System.out.println("popForwardReserve mid");	
@@ -293,8 +290,7 @@ public class btdb_clean {
 					}
 				}			
 				else{
-					System.out.println("===Promote Same ===");
-					//update_ids(index,index,popForwardReserve,moveOutReserve)
+					System.out.println("===Promote Same ===");					
 					keyArray[check_children(index-3, keyArray[index-3])] = moveOutReserve; //destArray_index-1;	
 					if(check_children(index-3, keyArray[index-3]) != midpop){
 						System.out.println("popForwardReserve mid");	
@@ -323,21 +319,7 @@ public class btdb_clean {
 		//for parent of new child? ===current fix
 		dest_Array[0] = keyArray[0];
 		promote();
-	}
-	
-	//public static update_ids(int index, int index_value, int pop, int move){
-	//	keyArray[check_children(iindex, keyArray[index_value])] = destArray_index-1;	
-	//	if(check_children(index, keyArray[index-3]) != midpop){
-	//		System.out.println("popForwardReserve mid");	
-	//		keyArray[midpop] = moveOutReserve; //popForwardReserve;
-	//		dest_Array[1] = destArray_index-1;	//moveOutReserve;
-	//	}
-	//	else{	
-	//		System.out.println("popForwardReserve 1");	
-	//		dest_Array[1] = popForwardReserve;
-	//	}
-	//}
-	
+	}	
 	public static int check_children(int index, int keyArrayindexvalue){
 		System.out.println("============ check_children ============");
 		System.out.println("keyArrayindexvalue - " + keyArrayindexvalue);
